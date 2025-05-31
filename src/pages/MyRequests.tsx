@@ -42,24 +42,17 @@ const MyRequests: React.FC = () => {
       let allRequests: Request[] = [];
       
       if (user?.role === 'ADMIN' || user?.role === 'STAFF') {
-        // Admin/Staff can see all requests
+        // Admin/Staff can see all requests using the admin endpoint
         allRequests = await apiService.getAllRequests();
       } else {
-        // Regular users see only their requests
-        try {
-          // Try the specific endpoint first
-          allRequests = await apiService.getMyRequests();
-        } catch (error) {
-          // Fallback to user-specific endpoint if available
-          if (user?.id) {
-            allRequests = await apiService.getUserRequests(user.id);
-          }
-        }
+        // Regular users see only their requests using the mine=true approach
+        allRequests = await apiService.getMyRequests();
       }
       
       setRequests(allRequests);
     } catch (error) {
       console.error('Error fetching requests:', error);
+      setRequests([]); // Set empty array on error to prevent showing stale data
     } finally {
       setLoading(false);
     }

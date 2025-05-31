@@ -61,14 +61,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setToken(response.token);
       
+      // Decode the JWT token to get user information
+      const decodedToken = jwtDecode<JWTPayload>(response.token);
+      console.log('Decoded JWT token:', decodedToken); // Debug log
+      
       // Create a user object from the JWT response
       const userObject: User = {
-        id: 0, // Backend doesn't provide user ID in JWT response
+        id: decodedToken.userId || parseInt(decodedToken.sub) || 0, // Try to get user ID from token
         username: response.username,
         email: '', // Backend doesn't provide email in JWT response
         role: response.role,
         createdAt: new Date().toISOString(),
       };
+      
+      console.log('Created user object:', userObject); // Debug log
       
       setUser(userObject);
       
@@ -89,9 +95,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setToken(response.token);
       
+      // Decode the JWT token to get user information
+      const decodedToken = jwtDecode<JWTPayload>(response.token);
+      
       // Create a user object from the JWT response
       const userObject: User = {
-        id: 0, // Backend doesn't provide user ID in JWT response
+        id: decodedToken.userId || parseInt(decodedToken.sub) || 0, // Try to get user ID from token
         username: response.username,
         email: userData.email, // Use the email from signup form
         role: response.role,

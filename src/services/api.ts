@@ -197,10 +197,10 @@ class ApiService {
   // REQUEST MANAGEMENT - MATCHING BACKEND API
   // ===============================
 
-  // GET /api/v1/requests - Get all requests (for admin/staff)
+  // GET /api/v1/requests - Get all requests (for admin/staff ONLY)
   async getAllRequests(): Promise<Request[]> {
     try {
-      console.log('Fetching all requests...');
+      console.log('Fetching all requests (admin/staff only)...');
       const response: AxiosResponse<Request[]> = await this.api.get('/requests');
       console.log('Requests fetched successfully:', response.data);
       return response.data;
@@ -223,24 +223,39 @@ class ApiService {
     }
   }
 
-  // GET /api/v1/requests/user/{userId} - Get requests by user (may vary in actual backend)
-  // Alternative: GET /api/v1/requests?userId={userId} or similar
+  // GET /api/v1/requests/user/{userId} - Get requests by specific user
+  // Note: This endpoint might not exist in backend, trying multiple approaches
   async getUserRequests(userId: number): Promise<Request[]> {
     try {
       console.log(`Fetching requests for user ${userId}...`);
-      const response: AxiosResponse<Request[]> = await this.api.get(`/requests/user/${userId}`);
-      console.log('User requests fetched successfully:', response.data);
-      return response.data;
-    } catch (error) {
+      
+      // Try the user-specific endpoint first
+      try {
+        const response: AxiosResponse<Request[]> = await this.api.get(`/requests/user/${userId}`);
+        console.log('User requests fetched successfully via user endpoint:', response.data);
+        return response.data;
+      } catch (userEndpointError: any) {
+        console.log('User-specific endpoint failed, trying query parameter approach...');
+        
+        // Fallback: Try using query parameters with the main requests endpoint
+        if (userEndpointError.response?.status === 404 || userEndpointError.response?.status === 405) {
+          const response: AxiosResponse<Request[]> = await this.api.get(`/requests?userId=${userId}`);
+          console.log('User requests fetched successfully via query parameter:', response.data);
+          return response.data;
+        }
+        throw userEndpointError;
+      }
+    } catch (error: any) {
       console.error(`Failed to fetch requests for user ${userId}:`, error);
       throw error;
     }
   }
 
-  // GET /api/v1/requests?userId=current - Get current user's requests (alternative approach)
+  // Get current user's requests - simplified approach for backend compatibility
   async getMyRequests(): Promise<Request[]> {
     try {
       console.log('Fetching current user requests...');
+      // Try the mine=true approach as this was in the original error logs
       const response: AxiosResponse<Request[]> = await this.api.get('/requests?mine=true');
       console.log('My requests fetched successfully:', response.data);
       return response.data;
@@ -263,15 +278,16 @@ class ApiService {
     }
   }
 
-  // PATCH /api/v1/requests/{id} - Update a request (admin approving/rejecting)
+  // PUT /api/v1/requests/{id}/status - Update a request status (admin approving/rejecting)
   async updateRequest(id: number, requestData: RequestUpdateDto): Promise<Request> {
     try {
-      console.log(`Updating request ${id}:`, requestData);
-      const response: AxiosResponse<Request> = await this.api.patch(`/requests/${id}`, requestData);
-      console.log('Request updated successfully:', response.data);
+      console.log(`Updating request ${id} status:`, requestData);
+      // Backend uses PUT /requests/{id}/status for status updates
+      const response: AxiosResponse<Request> = await this.api.put(`/requests/${id}/status`, requestData);
+      console.log('Request status updated successfully:', response.data);
       return response.data;
     } catch (error) {
-      console.error(`Failed to update request ${id}:`, error);
+      console.error(`Failed to update request ${id} status:`, error);
       throw error;
     }
   }
