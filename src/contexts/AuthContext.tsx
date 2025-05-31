@@ -1,0 +1,158 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import apiService from '../services/api';
+import type { User, AuthContextType, SignUpRequest } from '../types';
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+interface JWTPayload {
+  sub: string;
+  exp: number;
+  iat: number;
+  userId?: number;
+  role: string;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+
+      if (storedToken && storedUser) {
+        try {
+          // Check if token is still valid
+          const decodedToken = jwtDecode<JWTPayload>(storedToken);
+          const currentTime = Date.now() / 1000;
+
+          if (decodedToken.exp > currentTime) {
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
+          } else {
+            // Token expired, clear storage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        } catch (error) {
+          console.error('Error decoding token:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = async (username: string, password: string): Promise<void> => {
+    try {
+      setLoading(true);
+      const response = await apiService.signIn({ username, password });
+      
+      setToken(response.token);
+      
+      // Create a user object from the response
+      const userObject: User = {
+        id: 0, // Will be updated when we fetch user details
+        username: response.username,
+        email: '', // Will be updated when we fetch user details
+        role: response.role,
+        createdAt: new Date().toISOString(),
+      };
+      
+      setUser(userObject);
+      
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(userObject));
+
+      // Try to fetch complete user details
+      try {
+        const completeUser = await apiService.getCurrentUser();
+        setUser(completeUser);
+        localStorage.setItem('user', JSON.stringify(completeUser));
+      } catch (error) {
+        console.warn('Could not fetch complete user details:', error);
+        // Continue with basic user info
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signup = async (userData: SignUpRequest): Promise<void> => {
+    try {
+      setLoading(true);
+      const response = await apiService.signUp(userData);
+      
+      setToken(response.token);
+      
+      // Create a user object from the response
+      const userObject: User = {
+        id: 0, // Will be updated when we fetch user details
+        username: response.username,
+        email: userData.email,
+        role: response.role,
+        createdAt: new Date().toISOString(),
+      };
+      
+      setUser(userObject);
+      
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(userObject));
+
+      // Try to fetch complete user details
+      try {
+        const completeUser = await apiService.getCurrentUser();
+        setUser(completeUser);
+        localStorage.setItem('user', JSON.stringify(completeUser));
+      } catch (error) {
+        console.warn('Could not fetch complete user details:', error);
+        // Continue with basic user info
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = (): void => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
+
+  const value: AuthContextType = {
+    user,
+    token,
+    login,
+    signup,
+    logout,
+    loading,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}; 
