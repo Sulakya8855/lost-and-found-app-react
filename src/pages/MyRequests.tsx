@@ -20,6 +20,14 @@ const MyRequests: React.FC = () => {
   const [requestMessage, setRequestMessage] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
 
+  // Admin Notes Modal State
+  const [showAdminNotesModal, setShowAdminNotesModal] = useState(false);
+  const [adminNotesInput, setAdminNotesInput] = useState('');
+  const [pendingRequestAction, setPendingRequestAction] = useState<{
+    requestId: number;
+    status: 'APPROVED' | 'REJECTED';
+  } | null>(null);
+
   // Check for success message from navigation state
   useEffect(() => {
     if (location.state?.message) {
@@ -59,10 +67,38 @@ const MyRequests: React.FC = () => {
   };
 
   const handleUpdateRequest = async (requestId: number, status: 'APPROVED' | 'REJECTED', adminNotes?: string) => {
+    // Open modal to collect admin notes
+    setPendingRequestAction({ requestId, status });
+    setAdminNotesInput(adminNotes || '');
+    setShowAdminNotesModal(true);
+  };
+
+  const handleAdminNotesSubmit = async () => {
+    if (!pendingRequestAction) return;
+    
+    // Validate admin notes
+    if (adminNotesInput.trim() === '') {
+      alert('Admin notes are required when approving or rejecting requests.');
+      return;
+    }
+
     try {
-      await apiService.updateRequest(requestId, { status, adminNotes });
-      await fetchRequests(); // Refresh the requests list
-      setSuccessMessage(`Request ${status.toLowerCase()} successfully!`);
+      await apiService.updateRequest(
+        pendingRequestAction.requestId, 
+        { 
+          status: pendingRequestAction.status, 
+          adminNotes: adminNotesInput.trim() 
+        }
+      );
+      
+      // Close modal and reset state
+      setShowAdminNotesModal(false);
+      setPendingRequestAction(null);
+      setAdminNotesInput('');
+      
+      // Refresh the requests list and show success message
+      await fetchRequests();
+      setSuccessMessage(`Request ${pendingRequestAction.status.toLowerCase()} successfully!`);
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (error) {
       console.error('Error updating request:', error);
@@ -70,10 +106,18 @@ const MyRequests: React.FC = () => {
     }
   };
 
+  const handleCloseAdminNotesModal = () => {
+    setShowAdminNotesModal(false);
+    setPendingRequestAction(null);
+    setAdminNotesInput('');
+  };
+
   const handleDeleteRequest = async (requestId: number) => {
     if (!window.confirm('Are you sure you want to cancel this request? This action cannot be undone.')) {
       return;
     }
+
+    console.log('Attempting to delete request. User:', user, 'Request ID:', requestId);
 
     try {
       await apiService.deleteRequest(requestId);
@@ -468,6 +512,86 @@ const MyRequests: React.FC = () => {
                     className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-md transition-colors duration-200"
                   >
                     {createLoading ? 'Creating...' : 'Create Request'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Admin Notes Modal */}
+        {showAdminNotesModal && pendingRequestAction && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/3 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                {/* Modal Header */}
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {pendingRequestAction.status === 'APPROVED' ? 'Approve Request' : 'Reject Request'}
+                  </h3>
+                  <button
+                    onClick={handleCloseAdminNotesModal}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-md ${
+                    pendingRequestAction.status === 'APPROVED' 
+                      ? 'bg-green-50 border border-green-200' 
+                      : 'bg-red-50 border border-red-200'
+                  }`}>
+                    <p className={`text-sm ${
+                      pendingRequestAction.status === 'APPROVED' 
+                        ? 'text-green-800' 
+                        : 'text-red-800'
+                    }`}>
+                      You are about to <strong>{pendingRequestAction.status.toLowerCase()}</strong> this request. 
+                      Please provide detailed admin notes explaining your decision.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Admin Notes *
+                    </label>
+                    <textarea
+                      value={adminNotesInput}
+                      onChange={(e) => setAdminNotesInput(e.target.value)}
+                      placeholder={`Please provide a detailed explanation for ${pendingRequestAction.status.toLowerCase()} this request...`}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Admin notes are required and will be visible to the requester.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={handleCloseAdminNotesModal}
+                    className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAdminNotesSubmit}
+                    disabled={adminNotesInput.trim() === ''}
+                    className={`flex-1 px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 ${
+                      pendingRequestAction.status === 'APPROVED'
+                        ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400'
+                        : 'bg-red-600 hover:bg-red-700 disabled:bg-gray-400'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {pendingRequestAction.status === 'APPROVED' ? 'Approve Request' : 'Reject Request'}
                   </button>
                 </div>
               </div>

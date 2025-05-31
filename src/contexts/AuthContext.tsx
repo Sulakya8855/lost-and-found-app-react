@@ -15,6 +15,8 @@ interface JWTPayload {
   exp: number;
   iat: number;
   userId?: number;
+  user_id?: number;
+  id?: number;
   role: string;
 }
 
@@ -65,9 +67,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const decodedToken = jwtDecode<JWTPayload>(response.token);
       console.log('Decoded JWT token:', decodedToken); // Debug log
       
+      // Try to extract user ID from various possible fields in the JWT token
+      let userId = 0;
+      if (decodedToken.userId) {
+        userId = decodedToken.userId;
+      } else if (decodedToken.user_id) {
+        userId = decodedToken.user_id;
+      } else if (decodedToken.id) {
+        userId = decodedToken.id;
+      } else if (decodedToken.sub && !isNaN(parseInt(decodedToken.sub))) {
+        userId = parseInt(decodedToken.sub);
+      }
+      
+      console.log('Extracted user ID:', userId); // Debug log
+      
       // Create a user object from the JWT response
       const userObject: User = {
-        id: decodedToken.userId || parseInt(decodedToken.sub) || 0, // Try to get user ID from token
+        id: userId,
         username: response.username,
         email: '', // Backend doesn't provide email in JWT response
         role: response.role,
@@ -98,9 +114,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Decode the JWT token to get user information
       const decodedToken = jwtDecode<JWTPayload>(response.token);
       
+      // Try to extract user ID from various possible fields in the JWT token
+      let userId = 0;
+      if (decodedToken.userId) {
+        userId = decodedToken.userId;
+      } else if (decodedToken.user_id) {
+        userId = decodedToken.user_id;
+      } else if (decodedToken.id) {
+        userId = decodedToken.id;
+      } else if (decodedToken.sub && !isNaN(parseInt(decodedToken.sub))) {
+        userId = parseInt(decodedToken.sub);
+      }
+      
+      console.log('Extracted user ID:', userId); // Debug log
+      
       // Create a user object from the JWT response
       const userObject: User = {
-        id: decodedToken.userId || parseInt(decodedToken.sub) || 0, // Try to get user ID from token
+        id: userId,
         username: response.username,
         email: userData.email, // Use the email from signup form
         role: response.role,

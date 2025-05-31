@@ -224,39 +224,38 @@ class ApiService {
   }
 
   // GET /api/v1/requests/user/{userId} - Get requests by specific user
-  // Note: This endpoint might not exist in backend, trying multiple approaches
   async getUserRequests(userId: number): Promise<Request[]> {
     try {
       console.log(`Fetching requests for user ${userId}...`);
-      
-      // Try the user-specific endpoint first
-      try {
-        const response: AxiosResponse<Request[]> = await this.api.get(`/requests/user/${userId}`);
-        console.log('User requests fetched successfully via user endpoint:', response.data);
-        return response.data;
-      } catch (userEndpointError: any) {
-        console.log('User-specific endpoint failed, trying query parameter approach...');
-        
-        // Fallback: Try using query parameters with the main requests endpoint
-        if (userEndpointError.response?.status === 404 || userEndpointError.response?.status === 405) {
-          const response: AxiosResponse<Request[]> = await this.api.get(`/requests?userId=${userId}`);
-          console.log('User requests fetched successfully via query parameter:', response.data);
-          return response.data;
-        }
-        throw userEndpointError;
-      }
+      const response: AxiosResponse<Request[]> = await this.api.get(`/requests/user/${userId}`);
+      console.log('User requests fetched successfully:', response.data);
+      return response.data;
     } catch (error: any) {
       console.error(`Failed to fetch requests for user ${userId}:`, error);
       throw error;
     }
   }
 
-  // Get current user's requests - simplified approach for backend compatibility
+  // Get current user's requests - using correct backend endpoint
   async getMyRequests(): Promise<Request[]> {
     try {
       console.log('Fetching current user requests...');
-      // Try the mine=true approach as this was in the original error logs
-      const response: AxiosResponse<Request[]> = await this.api.get('/requests?mine=true');
+      
+      // Get current user info from localStorage to get the user ID
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        throw new Error('User not found in localStorage');
+      }
+      
+      const user = JSON.parse(userStr);
+      console.log('User object from localStorage:', user); // Debug log
+      
+      if (!user.id || user.id === 0) {
+        throw new Error('User ID not available - cannot fetch requests');
+      }
+
+      // Use the correct endpoint: /api/v1/requests/user/{userId}
+      const response: AxiosResponse<Request[]> = await this.api.get(`/requests/user/${user.id}`);
       console.log('My requests fetched successfully:', response.data);
       return response.data;
     } catch (error) {
@@ -292,10 +291,11 @@ class ApiService {
     }
   }
 
-  // DELETE /api/v1/requests/{id} - Delete a request (if supported by backend)
+  // DELETE /api/v1/requests/{id} - Delete a request
   async deleteRequest(id: number): Promise<void> {
     try {
       console.log(`Deleting request ${id}`);
+      // Correct endpoint: /api/v1/requests/{id}
       await this.api.delete(`/requests/${id}`);
       console.log('Request deleted successfully');
     } catch (error) {
