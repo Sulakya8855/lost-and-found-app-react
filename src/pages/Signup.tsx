@@ -80,7 +80,15 @@ const Signup: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <div className="flex justify-center">
+            <div className="bg-blue-600 rounded-full p-4 mb-4">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="text-center text-2xl font-bold text-gray-900 mb-2">Lost & Found</h1>
+          <h2 className="mt-2 text-center text-xl font-semibold text-gray-700">
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
