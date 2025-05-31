@@ -63,17 +63,6 @@ const Navbar: React.FC = () => {
             </Link>
 
             <Link
-              to="/my-items"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                isActive('/my-items')
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-700 hover:text-blue-600'
-              }`}
-            >
-              My Items
-            </Link>
-
-            <Link
               to="/my-requests"
               className={`px-3 py-2 rounded-md text-sm font-medium ${
                 isActive('/my-requests')
@@ -182,18 +171,6 @@ const Navbar: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Browse Items
-              </Link>
-
-              <Link
-                to="/my-items"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActive('/my-items')
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-700 hover:text-blue-600'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                My Items
               </Link>
 
               <Link

@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import AddItem from './pages/AddItem';
 import EditItem from './pages/EditItem';
 import ManageItems from './pages/ManageItems';
+import BrowseItems from './pages/BrowseItems';
 
 function App() {
   return (
@@ -57,10 +58,7 @@ function App() {
               path="/items"
               element={
                 <ProtectedRoute>
-                  <div className="p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Browse Items</h2>
-                    <p className="text-gray-600">This page will show all lost and found items</p>
-                  </div>
+                  <BrowseItems />
                 </ProtectedRoute>
               }
             />
@@ -72,18 +70,6 @@ function App() {
                   <div className="p-8 text-center">
                     <h2 className="text-2xl font-bold mb-4">Report Item</h2>
                     <p className="text-gray-600">This page will allow users to report lost or found items</p>
-                  </div>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/my-items"
-              element={
-                <ProtectedRoute>
-                  <div className="p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">My Items</h2>
-                    <p className="text-gray-600">This page will show user's reported items</p>
                   </div>
                 </ProtectedRoute>
               }

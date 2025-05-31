@@ -223,7 +223,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="card">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -274,7 +274,7 @@ const Dashboard: React.FC = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">My Items</p>
+                <p className="text-sm font-medium text-gray-600">Claimed Items</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.claimedItems}</p>
               </div>
             </div>
@@ -304,13 +304,6 @@ const Dashboard: React.FC = () => {
                 className="block w-full btn-secondary text-center"
               >
                 Browse All Items
-              </Link>
-              
-              <Link
-                to="/my-items"
-                className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 text-center"
-              >
-                View My Items
               </Link>
               
               <Link
