@@ -8,6 +8,9 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import AddItem from './pages/AddItem';
+import EditItem from './pages/EditItem';
+import ManageItems from './pages/ManageItems';
 
 function App() {
   return (
@@ -26,6 +29,25 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Item management routes for Admin/Staff */}
+            <Route
+              path="/items/add"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+                  <AddItem />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/items/:id/edit"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+                  <EditItem />
                 </ProtectedRoute>
               }
             />
@@ -84,10 +106,7 @@ function App() {
               path="/manage-items"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                  <div className="p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Manage Items</h2>
-                    <p className="text-gray-600">This page will allow staff to manage all items</p>
-                  </div>
+                  <ManageItems />
                 </ProtectedRoute>
               }
             />

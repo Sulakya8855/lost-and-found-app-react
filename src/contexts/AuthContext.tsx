@@ -61,11 +61,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setToken(response.token);
       
-      // Create a user object from the response
+      // Create a user object from the JWT response
       const userObject: User = {
-        id: 0, // Will be updated when we fetch user details
+        id: 0, // Backend doesn't provide user ID in JWT response
         username: response.username,
-        email: '', // Will be updated when we fetch user details
+        email: '', // Backend doesn't provide email in JWT response
         role: response.role,
         createdAt: new Date().toISOString(),
       };
@@ -74,16 +74,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(userObject));
-
-      // Try to fetch complete user details
-      try {
-        const completeUser = await apiService.getCurrentUser();
-        setUser(completeUser);
-        localStorage.setItem('user', JSON.stringify(completeUser));
-      } catch (error) {
-        console.warn('Could not fetch complete user details:', error);
-        // Continue with basic user info
-      }
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -99,11 +89,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setToken(response.token);
       
-      // Create a user object from the response
+      // Create a user object from the JWT response
       const userObject: User = {
-        id: 0, // Will be updated when we fetch user details
+        id: 0, // Backend doesn't provide user ID in JWT response
         username: response.username,
-        email: userData.email,
+        email: userData.email, // Use the email from signup form
         role: response.role,
         createdAt: new Date().toISOString(),
       };
@@ -112,16 +102,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(userObject));
-
-      // Try to fetch complete user details
-      try {
-        const completeUser = await apiService.getCurrentUser();
-        setUser(completeUser);
-        localStorage.setItem('user', JSON.stringify(completeUser));
-      } catch (error) {
-        console.warn('Could not fetch complete user details:', error);
-        // Continue with basic user info
-      }
     } catch (error) {
       console.error('Signup error:', error);
       throw error;

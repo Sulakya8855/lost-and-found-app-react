@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { JwtAuthenticationResponse, SignInRequest, SignUpRequest, User, Item, Request, ApiResponse, ItemFormData } from '../types';
+import type { JwtAuthenticationResponse, SignInRequest, SignUpRequest, User, Item, Request, ItemFormData, RequestCreateDto, RequestUpdateDto } from '../types';
 
 // Use relative URL since Vite proxy will handle routing to Spring Boot
 const API_BASE_URL = '/api/v1';
@@ -89,103 +89,132 @@ class ApiService {
     }
   }
 
-  async getCurrentUser(): Promise<User> {
-    const response: AxiosResponse<User> = await this.api.get('/auth/me');
+  // ===============================
+  // ITEM CRUD OPERATIONS - MATCHING BACKEND API EXACTLY
+  // ===============================
+
+  // GET /api/v1/items - Retrieves all items
+  async getAllItems(): Promise<Item[]> {
+    try {
+      console.log('Fetching all items...');
+      const response: AxiosResponse<Item[]> = await this.api.get('/items');
+      console.log('Items fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch items:', error);
+      throw error;
+    }
+  }
+
+  // GET /api/v1/items/{id} - Retrieves specific item by ID
+  async getItemById(id: number): Promise<Item> {
+    try {
+      console.log(`Fetching item with ID: ${id}`);
+      const response: AxiosResponse<Item> = await this.api.get(`/items/${id}`);
+      console.log('Item fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch item ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // POST /api/v1/items - Creates a new item
+  async createItem(itemData: ItemFormData): Promise<Item> {
+    try {
+      console.log('Creating new item:', itemData);
+      const response: AxiosResponse<Item> = await this.api.post('/items', itemData);
+      console.log('Item created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create item:', error);
+      throw error;
+    }
+  }
+
+  // PUT /api/v1/items/{id} - Updates an existing item
+  async updateItem(id: number, itemData: Partial<ItemFormData>): Promise<Item> {
+    try {
+      console.log(`Updating item ${id}:`, itemData);
+      const response: AxiosResponse<Item> = await this.api.put(`/items/${id}`, itemData);
+      console.log('Item updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update item ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // DELETE /api/v1/items/{id} - Deletes an item
+  async deleteItem(id: number): Promise<void> {
+    try {
+      console.log(`Deleting item ${id}`);
+      await this.api.delete(`/items/${id}`);
+      console.log('Item deleted successfully');
+    } catch (error) {
+      console.error(`Failed to delete item ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // PATCH /api/v1/items/{id}/status - Updates item status
+  async updateItemStatus(id: number, status: string): Promise<Item> {
+    try {
+      console.log(`Updating item ${id} status to: ${status}`);
+      const response: AxiosResponse<Item> = await this.api.patch(`/items/${id}/status`, { status });
+      console.log('Item status updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update item ${id} status:`, error);
+      throw error;
+    }
+  }
+
+  // ===============================
+  // USER MANAGEMENT (Admin only)
+  // ===============================
+
+  async getAllUsers(): Promise<User[]> {
+    const response: AxiosResponse<User[]> = await this.api.get('/users');
     return response.data;
   }
 
-  // User management methods
-  async getAllUsers(): Promise<User[]> {
-    const response: AxiosResponse<ApiResponse<User[]>> = await this.api.get('/users');
-    return response.data.data;
+  async getUserById(id: number): Promise<User> {
+    const response: AxiosResponse<User> = await this.api.get(`/users/${id}`);
+    return response.data;
   }
 
-  async updateUserRole(userId: number, role: string): Promise<User> {
-    const response: AxiosResponse<ApiResponse<User>> = await this.api.put(`/users/${userId}/role`, { role });
-    return response.data.data;
+  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    const response: AxiosResponse<User> = await this.api.put(`/users/${id}`, userData);
+    return response.data;
   }
 
   async deleteUser(userId: number): Promise<void> {
     await this.api.delete(`/users/${userId}`);
   }
 
-  // Item management methods
-  async getAllItems(): Promise<Item[]> {
-    const response: AxiosResponse<ApiResponse<Item[]>> = await this.api.get('/items');
-    return response.data.data;
-  }
+  // ===============================
+  // REQUEST MANAGEMENT (Future implementation)
+  // ===============================
 
-  async getItemById(id: number): Promise<Item> {
-    const response: AxiosResponse<ApiResponse<Item>> = await this.api.get(`/items/${id}`);
-    return response.data.data;
-  }
-
-  async createItem(itemData: ItemFormData): Promise<Item> {
-    const response: AxiosResponse<ApiResponse<Item>> = await this.api.post('/items', itemData);
-    return response.data.data;
-  }
-
-  async updateItem(id: number, itemData: Partial<ItemFormData>): Promise<Item> {
-    const response: AxiosResponse<ApiResponse<Item>> = await this.api.put(`/items/${id}`, itemData);
-    return response.data.data;
-  }
-
-  async deleteItem(id: number): Promise<void> {
-    await this.api.delete(`/items/${id}`);
-  }
-
-  async updateItemStatus(id: number, status: string): Promise<Item> {
-    const response: AxiosResponse<ApiResponse<Item>> = await this.api.put(`/items/${id}/status`, { status });
-    return response.data.data;
-  }
-
-  async getMyItems(): Promise<Item[]> {
-    const response: AxiosResponse<ApiResponse<Item[]>> = await this.api.get('/items/my-items');
-    return response.data.data;
-  }
-
-  // Request management methods
   async getAllRequests(): Promise<Request[]> {
-    const response: AxiosResponse<ApiResponse<Request[]>> = await this.api.get('/requests');
-    return response.data.data;
+    const response: AxiosResponse<Request[]> = await this.api.get('/requests');
+    return response.data;
   }
 
-  async getMyRequests(): Promise<Request[]> {
-    const response: AxiosResponse<ApiResponse<Request[]>> = await this.api.get('/requests/my-requests');
-    return response.data.data;
+  async getRequestById(id: number): Promise<Request> {
+    const response: AxiosResponse<Request> = await this.api.get(`/requests/${id}`);
+    return response.data;
   }
 
-  async createRequest(itemId: number, notes?: string): Promise<Request> {
-    const response: AxiosResponse<ApiResponse<Request>> = await this.api.post('/requests', { itemId, notes });
-    return response.data.data;
+  async createRequest(requestData: RequestCreateDto): Promise<Request> {
+    const response: AxiosResponse<Request> = await this.api.post('/requests', requestData);
+    return response.data;
   }
 
-  async updateRequestStatus(requestId: number, status: string, notes?: string): Promise<Request> {
-    const response: AxiosResponse<ApiResponse<Request>> = await this.api.put(`/requests/${requestId}/status`, { 
-      status, 
-      notes 
-    });
-    return response.data.data;
-  }
-
-  async deleteRequest(requestId: number): Promise<void> {
-    await this.api.delete(`/requests/${requestId}`);
-  }
-
-  // Search methods
-  async searchItems(query: string): Promise<Item[]> {
-    const response: AxiosResponse<ApiResponse<Item[]>> = await this.api.get(`/items/search?q=${encodeURIComponent(query)}`);
-    return response.data.data;
-  }
-
-  async getItemsByCategory(category: string): Promise<Item[]> {
-    const response: AxiosResponse<ApiResponse<Item[]>> = await this.api.get(`/items/category/${category}`);
-    return response.data.data;
-  }
-
-  async getItemsByStatus(status: string): Promise<Item[]> {
-    const response: AxiosResponse<ApiResponse<Item[]>> = await this.api.get(`/items/status/${status}`);
-    return response.data.data;
+  async updateRequest(id: number, requestData: RequestUpdateDto): Promise<Request> {
+    const response: AxiosResponse<Request> = await this.api.patch(`/requests/${id}`, requestData);
+    return response.data;
   }
 }
 

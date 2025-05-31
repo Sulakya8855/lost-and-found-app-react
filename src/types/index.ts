@@ -10,26 +10,35 @@ export interface User {
 
 export interface Item {
   id: number;
-  title: string;
+  name: string;
   description: string;
   category: string;
-  location: string;
+  locationFound: string;
   dateReported: string;
   status: 'LOST' | 'FOUND' | 'CLAIMED';
-  reportedBy: User;
-  imageUrl?: string;
-  contactInfo: string;
+  reportedById: number;
+  reportedByUsername: string;
+  heldById?: number;
+  heldByUsername?: string;
+  claimedById?: number;
+  claimedByUsername?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Request {
   id: number;
-  item: Item;
-  requestedBy: User;
-  requestDate: string;
+  itemId: number;
+  itemName: string;
+  requesterId: number;
+  requesterUsername: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  notes?: string;
-  reviewedBy?: User;
-  reviewDate?: string;
+  message: string;
+  requestDate: string;
+  resolutionDate?: string;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface JwtAuthenticationResponse {
@@ -66,11 +75,20 @@ export interface AuthContextType {
 }
 
 export interface ItemFormData {
-  title: string;
+  name: string;
   description: string;
   category: string;
-  location: string;
-  status: 'LOST' | 'FOUND';
-  contactInfo: string;
-  imageUrl?: string;
+  locationFound: string;
+  dateReported: string;
+  status: 'LOST' | 'FOUND' | 'CLAIMED';
+}
+
+export interface RequestCreateDto {
+  itemId: number;
+  message?: string;
+}
+
+export interface RequestUpdateDto {
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNotes?: string;
 } 

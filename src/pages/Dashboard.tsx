@@ -1,32 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
-import type { Item, Request } from '../types';
+import ItemCard from '../components/ItemCard';
+import type { Item } from '../types';
 
 interface DashboardStats {
   totalItems: number;
   lostItems: number;
   foundItems: number;
   claimedItems: number;
-  myItems: number;
-  myRequests: number;
-  pendingRequests: number;
 }
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalItems: 0,
     lostItems: 0,
     foundItems: 0,
     claimedItems: 0,
-    myItems: 0,
-    myRequests: 0,
-    pendingRequests: 0,
   });
   const [recentItems, setRecentItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Check for success message from navigation state
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the state to prevent showing the message on refresh
+      navigate(location.pathname, { replace: true });
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -35,28 +45,22 @@ const Dashboard: React.FC = () => {
         
         // Fetch all items for stats
         const allItems = await apiService.getAllItems();
-        const myItems = await apiService.getMyItems();
-        const myRequests = await apiService.getMyRequests();
         
         // Calculate stats
         const lostItems = allItems.filter(item => item.status === 'LOST').length;
         const foundItems = allItems.filter(item => item.status === 'FOUND').length;
         const claimedItems = allItems.filter(item => item.status === 'CLAIMED').length;
-        const pendingRequests = myRequests.filter(req => req.status === 'PENDING').length;
 
         setStats({
           totalItems: allItems.length,
           lostItems,
           foundItems,
           claimedItems,
-          myItems: myItems.length,
-          myRequests: myRequests.length,
-          pendingRequests,
         });
 
         // Get recent items (last 5)
         const recentItems = allItems
-          .sort((a, b) => new Date(b.dateReported).getTime() - new Date(a.dateReported).getTime())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5);
         setRecentItems(recentItems);
 
@@ -68,9 +72,6 @@ const Dashboard: React.FC = () => {
           lostItems: 0,
           foundItems: 0,
           claimedItems: 0,
-          myItems: 0,
-          myRequests: 0,
-          pendingRequests: 0,
         });
       } finally {
         setLoading(false);
@@ -79,6 +80,74 @@ const Dashboard: React.FC = () => {
 
     fetchDashboardData();
   }, []);
+
+  const handleStatusUpdate = async (itemId: number, newStatus: string) => {
+    try {
+      await apiService.updateItemStatus(itemId, newStatus);
+      // Refresh dashboard data after status update
+      const allItems = await apiService.getAllItems();
+      
+      // Calculate stats
+      const lostItems = allItems.filter(item => item.status === 'LOST').length;
+      const foundItems = allItems.filter(item => item.status === 'FOUND').length;
+      const claimedItems = allItems.filter(item => item.status === 'CLAIMED').length;
+
+      setStats({
+        totalItems: allItems.length,
+        lostItems,
+        foundItems,
+        claimedItems,
+      });
+
+      // Update recent items
+      const recentItems = allItems
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+      setRecentItems(recentItems);
+      
+      setSuccessMessage('Item status updated successfully!');
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (error) {
+      console.error('Error updating item status:', error);
+      alert('Failed to update item status. Please try again.');
+    }
+  };
+
+  const handleDeleteItem = async (itemId: number) => {
+    if (!window.confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await apiService.deleteItem(itemId);
+      // Refresh dashboard data after deletion
+      const allItems = await apiService.getAllItems();
+      
+      // Calculate stats
+      const lostItems = allItems.filter(item => item.status === 'LOST').length;
+      const foundItems = allItems.filter(item => item.status === 'FOUND').length;
+      const claimedItems = allItems.filter(item => item.status === 'CLAIMED').length;
+
+      setStats({
+        totalItems: allItems.length,
+        lostItems,
+        foundItems,
+        claimedItems,
+      });
+
+      // Update recent items
+      const recentItems = allItems
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+      setRecentItems(recentItems);
+      
+      setSuccessMessage('Item deleted successfully!');
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Failed to delete item. Please try again.');
+    }
+  };
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -102,6 +171,8 @@ const Dashboard: React.FC = () => {
     return user.username;
   };
 
+  const isStaffOrAdmin = user && (user.role === 'STAFF' || user.role === 'ADMIN');
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -113,6 +184,34 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-800">{successMessage}</p>
+              </div>
+              <div className="ml-auto pl-3">
+                <div className="-mx-1.5 -my-1.5">
+                  <button
+                    onClick={() => setSuccessMessage(null)}
+                    className="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Welcome Section */}
         <div className="px-4 py-6 sm:px-0">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -176,7 +275,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">My Items</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.myItems}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.claimedItems}</p>
               </div>
             </div>
           </div>
@@ -188,12 +287,17 @@ const Dashboard: React.FC = () => {
           <div className="card">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-4">
-              <Link
-                to="/items/new"
-                className="block w-full btn-primary text-center"
-              >
-                Report Lost/Found Item
-              </Link>
+              {isStaffOrAdmin && (
+                <Link
+                  to="/items/add"
+                  className="block w-full btn-primary text-center"
+                >
+                  <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add New Item
+                </Link>
+              )}
               
               <Link
                 to="/items"
@@ -206,14 +310,14 @@ const Dashboard: React.FC = () => {
                 to="/my-items"
                 className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 text-center"
               >
-                View My Items ({stats.myItems})
+                View My Items
               </Link>
               
               <Link
                 to="/my-requests"
                 className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 text-center"
               >
-                My Requests ({stats.myRequests})
+                My Requests
               </Link>
             </div>
           </div>
@@ -237,10 +341,10 @@ const Dashboard: React.FC = () => {
                 {recentItems.map((item) => (
                   <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{item.title}</h3>
-                      <p className="text-sm text-gray-600">{item.location}</p>
+                      <h3 className="font-medium text-gray-900">{item.name}</h3>
+                      <p className="text-sm text-gray-600">{item.locationFound}</p>
                       <p className="text-xs text-gray-500">
-                        {new Date(item.dateReported).toLocaleDateString()}
+                        {new Date(item.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <span className={getStatusClass(item.status)}>
@@ -257,14 +361,14 @@ const Dashboard: React.FC = () => {
         {(user?.role === 'ADMIN' || user?.role === 'STAFF') && (
           <div className="mt-8">
             <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Management</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">System Management</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Link
                   to="/manage-items"
                   className="block p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                 >
                   <h3 className="font-medium text-blue-900">Manage Items</h3>
-                  <p className="text-sm text-blue-700 mt-1">Review and update item statuses</p>
+                  <p className="text-sm text-blue-700 mt-1">Review and update all item statuses</p>
                 </Link>
                 
                 <Link
@@ -273,7 +377,7 @@ const Dashboard: React.FC = () => {
                 >
                   <h3 className="font-medium text-green-900">Manage Requests</h3>
                   <p className="text-sm text-green-700 mt-1">
-                    Handle claim requests ({stats.pendingRequests} pending)
+                    Handle claim requests
                   </p>
                 </Link>
                 
