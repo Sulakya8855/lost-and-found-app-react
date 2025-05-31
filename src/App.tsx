@@ -13,6 +13,7 @@ import EditItem from './pages/EditItem';
 import ManageItems from './pages/ManageItems';
 import BrowseItems from './pages/BrowseItems';
 import MyRequests from './pages/MyRequests';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
@@ -109,10 +110,7 @@ function App() {
               path="/manage-users"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <div className="p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Manage Users</h2>
-                    <p className="text-gray-600">This page will allow admin to manage user roles</p>
-                  </div>
+                  <UserManagement />
                 </ProtectedRoute>
               }
             />

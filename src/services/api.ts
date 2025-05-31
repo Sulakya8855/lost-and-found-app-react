@@ -174,23 +174,56 @@ class ApiService {
   // USER MANAGEMENT (Admin only)
   // ===============================
 
+  // GET /api/v1/users - Get all users (Admin only)
   async getAllUsers(): Promise<User[]> {
-    const response: AxiosResponse<User[]> = await this.api.get('/users');
-    return response.data;
+    try {
+      console.log('Fetching all users (admin only)...');
+      const response: AxiosResponse<User[]> = await this.api.get('/users');
+      console.log('Users fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      throw error;
+    }
   }
 
+  // GET /api/v1/users/{id} - Get specific user by ID (Admin only)
   async getUserById(id: number): Promise<User> {
-    const response: AxiosResponse<User> = await this.api.get(`/users/${id}`);
-    return response.data;
+    try {
+      console.log(`Fetching user with ID: ${id}`);
+      const response: AxiosResponse<User> = await this.api.get(`/users/${id}`);
+      console.log('User fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch user ${id}:`, error);
+      throw error;
+    }
   }
 
-  async updateUser(id: number, userData: Partial<User>): Promise<User> {
-    const response: AxiosResponse<User> = await this.api.put(`/users/${id}`, userData);
-    return response.data;
+  // PUT /api/v1/users/{id}/role - Update user role (Admin only)
+  async updateUser(id: number, userData: { role?: string; isEnabled?: boolean; isLocked?: boolean }): Promise<User> {
+    try {
+      console.log(`Updating user ${id} role:`, userData);
+      // Backend uses PUT /users/{id}/role for role updates
+      const response: AxiosResponse<User> = await this.api.put(`/users/${id}/role`, userData);
+      console.log('User role updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update user ${id} role:`, error);
+      throw error;
+    }
   }
 
+  // DELETE /api/v1/users/{id} - Delete user (Admin only)
   async deleteUser(userId: number): Promise<void> {
-    await this.api.delete(`/users/${userId}`);
+    try {
+      console.log(`Deleting user ${userId}`);
+      await this.api.delete(`/users/${userId}`);
+      console.log('User deleted successfully');
+    } catch (error) {
+      console.error(`Failed to delete user ${userId}:`, error);
+      throw error;
+    }
   }
 
   // ===============================
