@@ -7,6 +7,7 @@ interface ItemCardProps {
   item: Item;
   onStatusUpdate?: (itemId: number, newStatus: string) => void;
   onDelete?: (itemId: number) => void;
+  onRequestItem?: (itemId: number) => void;
   showActions?: boolean;
 }
 
@@ -14,6 +15,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
   item, 
   onStatusUpdate, 
   onDelete, 
+  onRequestItem, 
   showActions = false 
 }) => {
   const { user } = useAuth();
@@ -37,9 +39,10 @@ const ItemCard: React.FC<ItemCardProps> = ({
     user.id === item.reportedById
   );
 
-  const canClaim = user && (
+  const canRequestItem = user && (
     item.status === 'FOUND' && 
-    user.id !== item.reportedById
+    user.id !== item.reportedById &&
+    onRequestItem
   );
 
   return (
@@ -105,44 +108,23 @@ const ItemCard: React.FC<ItemCardProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
-        {canClaim && (
-          <button className="btn-primary text-sm">
-            Request Item
-          </button>
-        )}
+      {(canRequestItem || (showActions && canModify)) && (
+        <div className="flex gap-2 pt-4 border-t border-gray-200 justify-between">
+          {/* Request Item Button for regular users */}
+          {canRequestItem && (
+            <button
+              onClick={() => onRequestItem!(item.id)}
+              className="inline-flex items-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+              Request Item
+            </button>
+          )}
 
-        {showActions && canModify && (
-          <>
-            {onStatusUpdate && (
-              <div className="flex gap-2 flex-wrap">
-                {item.status === 'LOST' && (
-                  <button
-                    onClick={() => onStatusUpdate(item.id, 'FOUND')}
-                    className="btn-success text-xs"
-                  >
-                    Mark Found
-                  </button>
-                )}
-                {item.status === 'FOUND' && (
-                  <button
-                    onClick={() => onStatusUpdate(item.id, 'CLAIMED')}
-                    className="btn-warning text-xs"
-                  >
-                    Mark Claimed
-                  </button>
-                )}
-                {item.status === 'CLAIMED' && (
-                  <button
-                    onClick={() => onStatusUpdate(item.id, 'FOUND')}
-                    className="btn-secondary text-xs"
-                  >
-                    Mark Found
-                  </button>
-                )}
-              </div>
-            )}
-
+          {/* Admin/Staff Actions */}
+          {showActions && canModify && (
             <div className="flex gap-2 ml-auto">
               <Link
                 to={`/items/${item.id}/edit`}
@@ -166,9 +148,9 @@ const ItemCard: React.FC<ItemCardProps> = ({
                 </button>
               )}
             </div>
-          </>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

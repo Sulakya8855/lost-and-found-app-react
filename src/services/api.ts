@@ -194,27 +194,98 @@ class ApiService {
   }
 
   // ===============================
-  // REQUEST MANAGEMENT (Future implementation)
+  // REQUEST MANAGEMENT - MATCHING BACKEND API
   // ===============================
 
+  // GET /api/v1/requests - Get all requests (for admin/staff)
   async getAllRequests(): Promise<Request[]> {
-    const response: AxiosResponse<Request[]> = await this.api.get('/requests');
-    return response.data;
+    try {
+      console.log('Fetching all requests...');
+      const response: AxiosResponse<Request[]> = await this.api.get('/requests');
+      console.log('Requests fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch requests:', error);
+      throw error;
+    }
   }
 
+  // GET /api/v1/requests/{id} - Get specific request by ID
   async getRequestById(id: number): Promise<Request> {
-    const response: AxiosResponse<Request> = await this.api.get(`/requests/${id}`);
-    return response.data;
+    try {
+      console.log(`Fetching request with ID: ${id}`);
+      const response: AxiosResponse<Request> = await this.api.get(`/requests/${id}`);
+      console.log('Request fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch request ${id}:`, error);
+      throw error;
+    }
   }
 
+  // GET /api/v1/requests/user/{userId} - Get requests by user (may vary in actual backend)
+  // Alternative: GET /api/v1/requests?userId={userId} or similar
+  async getUserRequests(userId: number): Promise<Request[]> {
+    try {
+      console.log(`Fetching requests for user ${userId}...`);
+      const response: AxiosResponse<Request[]> = await this.api.get(`/requests/user/${userId}`);
+      console.log('User requests fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch requests for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  // GET /api/v1/requests?userId=current - Get current user's requests (alternative approach)
+  async getMyRequests(): Promise<Request[]> {
+    try {
+      console.log('Fetching current user requests...');
+      const response: AxiosResponse<Request[]> = await this.api.get('/requests?mine=true');
+      console.log('My requests fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch my requests:', error);
+      throw error;
+    }
+  }
+
+  // POST /api/v1/requests - Create a new request
   async createRequest(requestData: RequestCreateDto): Promise<Request> {
-    const response: AxiosResponse<Request> = await this.api.post('/requests', requestData);
-    return response.data;
+    try {
+      console.log('Creating new request:', requestData);
+      const response: AxiosResponse<Request> = await this.api.post('/requests', requestData);
+      console.log('Request created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create request:', error);
+      throw error;
+    }
   }
 
+  // PATCH /api/v1/requests/{id} - Update a request (admin approving/rejecting)
   async updateRequest(id: number, requestData: RequestUpdateDto): Promise<Request> {
-    const response: AxiosResponse<Request> = await this.api.patch(`/requests/${id}`, requestData);
-    return response.data;
+    try {
+      console.log(`Updating request ${id}:`, requestData);
+      const response: AxiosResponse<Request> = await this.api.patch(`/requests/${id}`, requestData);
+      console.log('Request updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update request ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // DELETE /api/v1/requests/{id} - Delete a request (if supported by backend)
+  async deleteRequest(id: number): Promise<void> {
+    try {
+      console.log(`Deleting request ${id}`);
+      await this.api.delete(`/requests/${id}`);
+      console.log('Request deleted successfully');
+    } catch (error) {
+      console.error(`Failed to delete request ${id}:`, error);
+      throw error;
+    }
   }
 }
 

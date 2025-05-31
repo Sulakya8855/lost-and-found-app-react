@@ -74,6 +74,27 @@ const BrowseItems: React.FC = () => {
     }
   };
 
+  const handleRequestItem = async (itemId: number) => {
+    try {
+      if (!user) {
+        alert('Please log in to request items.');
+        return;
+      }
+
+      const message = prompt('Optional: Add a message with your request:');
+      
+      await apiService.createRequest({ 
+        itemId, 
+        message: message || undefined 
+      });
+      
+      alert('Request submitted successfully! You can view your requests in the My Requests section.');
+    } catch (error) {
+      console.error('Error creating request:', error);
+      alert('Failed to submit request. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -217,6 +238,7 @@ const BrowseItems: React.FC = () => {
                 key={item.id}
                 item={item}
                 showActions={false}
+                onRequestItem={handleRequestItem}
               />
             ))}
           </div>

@@ -12,6 +12,7 @@ import AddItem from './pages/AddItem';
 import EditItem from './pages/EditItem';
 import ManageItems from './pages/ManageItems';
 import BrowseItems from './pages/BrowseItems';
+import MyRequests from './pages/MyRequests';
 
 function App() {
   return (
@@ -79,10 +80,7 @@ function App() {
               path="/my-requests"
               element={
                 <ProtectedRoute>
-                  <div className="p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">My Requests</h2>
-                    <p className="text-gray-600">This page will show user's claim requests</p>
-                  </div>
+                  <MyRequests />
                 </ProtectedRoute>
               }
             />
@@ -101,10 +99,7 @@ function App() {
               path="/manage-requests"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                  <div className="p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Manage Requests</h2>
-                    <p className="text-gray-600">This page will allow staff to approve/reject requests</p>
-                  </div>
+                  <MyRequests />
                 </ProtectedRoute>
               }
             />
